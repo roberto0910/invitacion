@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Propuesta Atrevida - Formulario</title>
     <style>
-        /* --- Tus estilos originales --- */
         * {
             margin: 0;
             padding: 0;
@@ -134,53 +133,90 @@
         
         .btn {
             display: inline-block;
-            padding: 12px 25px;
-            background: linear-gradient(135deg, #ff8c00, #ff4500);
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
             border: none;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 10px 5px;
+            width: 100%;
+            max-width: 300px;
         }
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
         }
-        
-        .btn-save {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            width: 100%;
-            max-width: 300px;
-            font-size: 18px;
-            padding: 15px 30px;
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            border: 2px solid #ff4444 !important;
+            border-radius: 5px;
+        }
+
+        .radio-error {
+            border: 2px solid #ff4444;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="form-container">
+    <div class="container">
         <div class="header">
             <div class="flame">🔥</div>
             <h1>¿Quieres tener una noche de calentura conmigo? (30 segundos😈)</h1>
             <p class="subtitle">Completa el siguiente formulario</p>
         </div>
         
-        <!-- ✅ Formulario con FormSubmit -->
-        <form id="proposal-form" action="https://formspree.io/f/your-form-id" method="POST"></form>
+        <!-- ✅ FORMULARIO CORREGIDO -->
+        <form id="proposal-form" action="https://formsubmit.co/roberto.negreteq@gmail.com" method="POST">
+            <!-- Configuración FormSubmit -->
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="🔥 NUEVA RESPUESTA - Propuesta Atrevida">
+            <input type="hidden" name="_next" value="https://roberto0910.github.io/invitacion/gracias.html">
+            <input type="text" name="_honey" style="display:none">
+            <input type="hidden" name="_template" value="table">
+            
             <div class="form-section">
                 <h2>Tu Decisión</h2>
                 <div class="form-group">
                     <label>¿Aceptas la propuesta?</label>
-                    <div class="radio-group">
+                    <div class="radio-group" id="radio-group">
                         <label class="radio-option">
-                            <input type="radio" name="decision" value="sí" required>
+                            <input type="radio" name="decision" value="Sí, acepto ✅" required>
                             Sí, acepto la propuesta
                         </label>
                         <label class="radio-option">
-                            <input type="radio" name="decision" value="no">
+                            <input type="radio" name="decision" value="No, rechazo ❌">
                             No, prefiero no aceptar
                         </label>
                     </div>
@@ -235,15 +271,117 @@
                 </div>
             </div>
 
-            <!-- 🔒 Configuración oculta para FormSubmit -->
-            <input type="hidden" name="_captcha" value="false">
-            <input type="hidden" name="_subject" value="Nueva respuesta a tu propuesta 🔥">
-            <input type="hidden" name="_template" value="table">
-
-            <div class="actions">
-                <button type="submit" class="btn btn-save">🔥 Guardar Mi Respuesta</button>
+            <div style="text-align: center;">
+                <button type="submit" class="btn" id="submit-btn">
+                    🔥 Guardar Mi Respuesta
+                </button>
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('proposal-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const dateInput = document.getElementById('date');
+            const daySelect = document.getElementById('day');
+            const radioGroup = document.getElementById('radio-group');
+
+            // Auto-completar día al seleccionar fecha
+            if (dateInput && daySelect) {
+                dateInput.addEventListener('change', function() {
+                    if (this.value) {
+                        const selectedDate = new Date(this.value);
+                        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                        const dayName = days[selectedDate.getDay()];
+                        
+                        for (let option of daySelect.options) {
+                            if (option.value === dayName) {
+                                option.selected = true;
+                                break;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Validación y envío del formulario - CORREGIDA
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                console.log('Validando formulario...');
+                
+                // Resetear errores
+                document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+                radioGroup.classList.remove('radio-error');
+                
+                let isValid = true;
+
+                // Validar campos de texto requeridos
+                const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('error');
+                        console.log('Campo vacío:', field.name);
+                    }
+                });
+
+                // Validar radio buttons - CORRECCIÓN IMPORTANTE
+                const radioButtons = document.querySelectorAll('input[name="decision"]');
+                let radioSelected = false;
+                
+                radioButtons.forEach(radio => {
+                    if (radio.checked) {
+                        radioSelected = true;
+                        console.log('Radio seleccionado:', radio.value);
+                    }
+                });
+
+                if (!radioSelected) {
+                    isValid = false;
+                    radioGroup.classList.add('radio-error');
+                    console.log('Error: Ningún radio button seleccionado');
+                }
+
+                // Mostrar resultado de validación
+                console.log('Formulario válido:', isValid);
+
+                if (!isValid) {
+                    alert('❌ Por favor, completa todos los campos requeridos.');
+                    return;
+                }
+
+                // Si es válido, enviar formulario
+                console.log('✅ Formulario válido. Enviando...');
+                
+                // Mostrar estado de loading
+                submitBtn.innerHTML = '⏳ Enviando...';
+                submitBtn.disabled = true;
+
+                // Enviar formulario después de un breve delay
+                setTimeout(() => {
+                    // Usar el método submit nativo del formulario
+                    form.submit();
+                }, 1000);
+            });
+
+            // Remover errores al interactuar con los campos
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                });
+            });
+
+            // Remover error de radio buttons al hacer click
+            const radios = form.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => {
+                radio.addEventListener('click', function() {
+                    radioGroup.classList.remove('radio-error');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
